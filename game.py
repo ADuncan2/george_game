@@ -7,12 +7,15 @@ class Game:
     def __init__(self, agents, seed=None):
         self.agents = agents
         self.rng = random.Random(seed)
+        for agent in self.agents:
+            agent.random = self.rng
         self.create_bag()
         self.set_up_board()
         self.current_agent_index = 0
+        self.game_ended = False
         
 
-    def create_empty_board(self, width=10, height=10):
+    def create_empty_board(self, width=9, height=9):
         self.board = {(x, y): None for x in range(width) for y in range(height)}
     
     def create_bag(self):
@@ -54,7 +57,7 @@ class Game:
         self.create_empty_board()
 
         # Defines the starting position of tiles
-        central_5 = [(5,4),(5,5),(5,6),(6,5),(4,5)]
+        central_5 = [(4,3),(4,4),(4,5),(5,4),(3,4)]
 
         # Places tiles at the starting positions
         for pos in central_5:
@@ -101,33 +104,69 @@ class Game:
 
         return list(candidate_positions)
 
-    def play_turn(self):
-        turn = Turn()
+    def play_turn(self, turn, agent):
 
         while not turn.end_turn:
+            # Get the agent to select the move they want to make
+            turn = agent.select_action(turn = turn)
+
+            if turn.turn_type=="place_tile":
+                # Place the move selected
+                self.place_tile(turn.move)
+                print(f"{agent.name} placed a tile")
+            else:
+                pass
+
+            # Refill the players hand to 5
+            self.refill_agents_hand(agent)
+
+
+    def play_game(self):
+        turn_count = 1
+        while self.game_ended == False:
+            print(f"Starting turn {turn_count}")
+
+            # Visualise board
+            self.print_board()
+
             # Find the possible moves based on the board condition
             legal_actions = self.get_legal_placements()
+            
+            # Start the turn
+            turn = Turn(game_state= self.board, legal_actions=legal_actions, turn_count = turn_count)
 
             # Define the agent who is taking the turn
             agent = self.agents[self.current_agent_index]
 
             print(f"{agent.name} is playing...")
 
-            # Get the agent to select the move they want to make
-            turn = agent.select_action(turn = turn,game_state= self.board, legal_actions=legal_actions)
+            # Get the agent to play the turn
+            self.play_turn(turn, agent)
 
-            # Place the move selected
-            self.place_tile(turn.move)
-            print(f"{agent.name} placed a tile")
-
-            # refill the players hand to 5
-            self.refill_agents_hand(agent)
-
-            
-
+            # Switch to next player
             self.current_agent_index = (self.current_agent_index + 1) % len(self.agents)
 
-            turn = Turn()
+            turn_count = turn_count + 1
+            print("\n")
+    
+    def print_board(self):
+        width = max(x for (x, _) in self.board.keys()) + 1
+        height = max(y for (_, y) in self.board.keys()) + 1
+
+        print("Current Board State:")
+        for y in range(height):
+            row = []
+            for x in range(width):
+                tile = self.board.get((x, y))
+                if tile is None:
+                    row.append(" . ")  # Empty cell
+                else:
+                    # Use short tile label or initial
+                    row.append(f" {str(tile.value)[0]} ")  # Customize display here
+            print("".join(row))
+
+
+
 
 
 
@@ -139,12 +178,17 @@ class Tile:
         self.type = tile_type
         self.colour = colour
         self.value = value
+        self.stack_height = 1
 
 
 class Turn:
-    def __init__(self):
+    def __init__(self, game_state, legal_actions, turn_count):
+        self.turn_type = None
         self.move = {}
         self.end_turn = False
+        self.game_state = game_state
+        self.legal_actions = legal_actions
+        self.turn_count = turn_count
 
 
 
@@ -156,6 +200,6 @@ if __name__ == "__main__":
     agents = [agent1, agent2, agent3]
     game = Game(agents =agents, seed=42)
 
-    game.play_turn()
+    game.play_game()
 
 
