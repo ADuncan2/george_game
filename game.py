@@ -1,5 +1,5 @@
 import random
-from agents import Agent
+from agents import Agent, Tile, Turn
 
 
 # game_engine.py
@@ -173,22 +173,7 @@ class Game:
 
 
 
-class Tile:
-    def __init__(self, tile_type, colour, value):
-        self.type = tile_type
-        self.colour = colour
-        self.value = value
-        self.stack_height = 1
 
-
-class Turn:
-    def __init__(self, game_state, legal_actions, turn_count):
-        self.turn_type = None
-        self.move = {}
-        self.end_turn = False
-        self.game_state = game_state
-        self.legal_actions = legal_actions
-        self.turn_count = turn_count
 
 
 
