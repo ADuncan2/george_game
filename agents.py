@@ -12,7 +12,7 @@ class Tile:
 class Turn:
     def __init__(self, game_state, legal_actions, turn_count):
         self.turn_type = None
-        self.move = {}
+        self.move = dict()
         self.end_turn = False
         self.game_state = game_state
         self.legal_actions = legal_actions
@@ -26,7 +26,7 @@ class Agent:
         self.name = name
         self.random = None
 
-    def select_action(self, turn):
+    def select_actions(self, turn):
 
         turn = self.decide_roll_or_place(turn)
 
@@ -38,6 +38,7 @@ class Agent:
             placement = turn.legal_actions[random.randrange(len(turn.legal_actions))]
 
             turn.move = {placement: tile_to_play}
+            print(f"{self.name} placed a tile")
             
             turn.end_turn = True
         else:
@@ -51,8 +52,11 @@ class Agent:
             # Look through your hand to see if you can develop any of the active houses
             for tile in activated_tiles.values():
                 if tile.stack_height==2:
-                    placement = activated_tiles.get(tile)
-                    turn.move[placement] = Tile("tower", tile.colour, "X")
+                    placement = [key for key, val in activated_tiles.items() if val == tile]
+                    
+                    tower_tile = Tile("tower", tile.colour, "X")
+                    tower_tile.stack_height = 3
+                    turn.move[placement[0]] = tower_tile
                     print("Developed a tower")
                 else:
                     if tile.type == "house":
@@ -64,21 +68,24 @@ class Agent:
                         if len(colour_in_hand) > 0:
                             # If there are more than one tiles in the agents hand of the right colour, play the lowst value
                             tile_to_play = min(colour_in_hand, key=lambda tile: tile.value)
+
+
                             # Find the coordinates of where to place it
-                            placement = activated_tiles.get(tile)
+                            placement = [key for key, val in activated_tiles.items() if val == tile]
                             
                             # Amend the stack height
-                            tile.stack_height = 2
+                            tile_to_play.stack_height = 2
+
+                            # Remove the tile from the agents hand ahead of playing it
+                            self.hand.remove(tile_to_play)
 
                             # Put a move
-                            turn.move[placement] = tile_to_play
+                            turn.move[placement[0]] = tile_to_play
                             print("Developed a house")
                         else:
                             pass
                     else:
                         pass
-
-
 
             turn.end_turn = True
 

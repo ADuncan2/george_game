@@ -1,6 +1,6 @@
 import random
 from agents import Agent, Tile, Turn
-
+from collections import Counter, defaultdict
 
 # game_engine.py
 class Game:
@@ -69,7 +69,16 @@ class Game:
 
     def is_game_over(self):
         # Check win/loss/draw condition
-        pass
+        tower_count = 0
+        for tile in self.board.values():
+            if tile is not None:
+                if tile.type == "tower":
+                    tower_count = tower_count + 1
+                else:
+                    pass
+        
+        if tower_count > 7:
+            self.game_ended = True
 
     def place_tile(self, move):
         if not isinstance(move, dict) or len(move) != 1:
@@ -79,9 +88,6 @@ class Game:
 
         if (x, y) not in self.board:
             raise ValueError(f"Position ({x}, {y}) is out of bounds.")
-
-        if self.board[(x, y)] is not None:
-            raise ValueError(f"Position ({x}, {y}) is already occupied.")
 
         self.board[(x, y)] = tile
 
@@ -108,12 +114,15 @@ class Game:
 
         while not turn.end_turn:
             # Get the agent to select the move they want to make
-            turn = agent.select_action(turn = turn)
+            turn = agent.select_actions(turn = turn)
 
-            if turn.turn_type=="place_tile":
+            if bool(turn.move):
                 # Place the move selected
-                self.place_tile(turn.move)
-                print(f"{agent.name} placed a tile")
+                for key, tile in turn.move.items():
+                    
+                    move_dict = {key:tile}
+                    self.place_tile(move_dict)
+
             else:
                 pass
 
@@ -125,9 +134,6 @@ class Game:
         turn_count = 1
         while self.game_ended == False:
             print(f"Starting turn {turn_count}")
-
-            # Visualise board
-            self.print_board()
 
             # Find the possible moves based on the board condition
             legal_actions = self.get_legal_placements()
@@ -142,13 +148,78 @@ class Game:
 
             # Get the agent to play the turn
             self.play_turn(turn, agent)
+            
+            # Visualise board
+            self.print_board()
+            
+            # Check if game is over
+            self.is_game_over()
 
             # Switch to next player
             self.current_agent_index = (self.current_agent_index + 1) % len(self.agents)
 
             turn_count = turn_count + 1
             print("\n")
-    
+        print("game ended!")
+
+        self.determine_winner()
+
+    def determine_winner(self):
+
+        # Step 1: Count tower colours on the board
+        tower_colours = []
+        for tile in self.board.values():
+            if tile is not None and getattr(tile, 'type', None) == "tower":
+                tower_colours.append(tile.colour)
+
+        # Step 2: Determine the winning colour
+        colour_counts = Counter(tower_colours)
+        winning_colour = max(colour_counts, key=colour_counts.get)
+
+        print(f"Winning tower colour is: {winning_colour}")
+
+        # Step 3: Score each agent
+        agent_scores = []
+        for agent in self.agents:
+            tiles_of_colour = [tile for tile in agent.hand if tile.colour == winning_colour]
+
+            count = len(tiles_of_colour)
+            value = sum(tile.value if isinstance(tile.value, (int, float)) else 1 for tile in tiles_of_colour)
+
+            agent_scores.append({
+                'agent': agent,
+                'count': count,
+                'value': value
+            })
+
+        # Step 4: Determine winning agent
+        # First by count, then by value
+        agent_scores.sort(key=lambda x: (x['count'], x['value']), reverse=True)
+
+        winning_agent = agent_scores[0]['agent']
+        print(f"Winning agent is: {winning_agent.name if hasattr(winning_agent, 'name') else winning_agent}")
+        
+
+
+    def check_who_won(self):
+
+        tower_colours = {"red": 0,
+        "green":0,
+        "black":0}
+        
+        for tile in self.board.values():
+            if tile is not None:
+                if tile.type == "tower":
+                    col = tile.colour
+                    current_val = tower_colours[col]
+                    tower_colours[col] = current_val + 1
+                else:
+                    pass
+        
+        print(tower_colours)
+        
+        print(tower_colours[max(tower_colours.values())])
+
     def print_board(self):
         width = max(x for (x, _) in self.board.keys()) + 1
         height = max(y for (_, y) in self.board.keys()) + 1
@@ -158,11 +229,19 @@ class Game:
             row = []
             for x in range(width):
                 tile = self.board.get((x, y))
+                
                 if tile is None:
-                    row.append(" . ")  # Empty cell
+                    row.append("  .  ")  # Empty cell
                 else:
-                    # Use short tile label or initial
-                    row.append(f" {str(tile.value)[0]} ")  # Customize display here
+                    #print(tile, tile.stack_height, tile.type)
+
+                    if tile.type == "tower":
+                        row.append(f"  X  ")  # Customize display here
+                    elif tile.stack_height == 2:
+                        row.append(f"  {str(tile.value)[0]}* ")  # Customize display here
+                    elif tile.stack_height == 1:
+                        # Use short tile label or initial
+                        row.append(f"  {str(tile.value)[0]}  ")  # Customize display here
             print("".join(row))
 
 
