@@ -1,96 +1,95 @@
-import random
-import copy
-
-class Tile:
-    def __init__(self, tile_type, colour, value):
-        self.type = tile_type
-        self.colour = colour
-        self.value = value
-        self.stack_height = 1
-
-
-class Turn:
-    def __init__(self, game_state, legal_actions, turn_count):
-        self.turn_type = None
-        self.move = dict()
-        self.end_turn = False
-        self.game_state = game_state
-        self.legal_actions = legal_actions
-        self.turn_count = turn_count
-
 
 # agents.py
 class Agent:
-    def __init__(self,name):
+    def __init__(self,name,random):
         self.hand = []
         self.name = name
-        self.random = None
+        self.random = random
+        self.strategy = None
 
-    def select_actions(self, turn):
+    def where_to_place(self, game_state, rules, move):
+        
+        # Consult the rules and board to see where a tile can go
+        legal_placements = rules.get_legal_placements(game_state)
 
-        turn = self.decide_roll_or_place(turn)
+        # Choose a tile from the agents hand to play (random atm)
+        index = self.random.randrange(len(self.hand))
+        tile_to_play = self.hand.pop(index)
 
-        if turn.turn_type == "place_tile":
-            # Select a random tile from hand
-            index = self.random.randrange(len(self.hand))
-            tile_to_play = self.hand.pop(index)
+        # Choose a valid place to play the tile (random atm)
+        target_location = self.random.randrange(len(legal_placements))
 
-            placement = turn.legal_actions[random.randrange(len(turn.legal_actions))]
+        ## Finalise the move
+        move.tile = tile_to_play
+        move.target_location = target_location
 
-            turn.move = {placement: tile_to_play}
-            print(f"{self.name} placed a tile")
+        return move
+
+        
+
+    # def select_actions(self, turn):
+
+    #     if turn.turn_type == "place_tile":
+    #         # Select a random tile from hand
+    #         index = self.random.randrange(len(self.hand))
+    #         tile_to_play = self.hand.pop(index)
+
+    #         placement = turn.legal_actions[random.randrange(len(turn.legal_actions))]
+
+    #         turn.move = {placement: tile_to_play}
+    #         print(f"{self.name} placed a tile")
             
-            turn.end_turn = True
-        else:
-            # Roll the dice
-            dice = self.random.randrange(5) + 1
-            print(f"{self.name} rolled a {dice}")
+    #         turn.end_turn = True
+    #     else:
+    #         # Roll the dice
+    #         dice = self.random.randrange(5) + 1
+    #         print(f"{self.name} rolled a {dice}")
 
-            # Find the tiles that are activated by the throw
-            activated_tiles = self.get_activated_tiles(turn,dice)
+    #         # Find the tiles that are activated by the throw
+    #         activated_tiles = self.get_activated_tiles(turn,dice)
 
-            # Look through your hand to see if you can develop any of the active houses
-            for tile in activated_tiles.values():
-                if tile.stack_height==2:
-                    placement = [key for key, val in activated_tiles.items() if val == tile]
+    #         # Look through your hand to see if you can develop any of the active houses
+    #         for tile in activated_tiles.values():
+    #             if tile.stack_height==2:
+    #                 placement = [key for key, val in activated_tiles.items() if val == tile]
                     
-                    tower_tile = Tile("tower", tile.colour, "X")
-                    tower_tile.stack_height = 3
-                    turn.move[placement[0]] = tower_tile
-                    print("Developed a tower")
-                else:
-                    if tile.type == "house":
-                        tile_colour = tile.colour
-                        # Check if agent has any of the colour of the active house in their hand
-                        colour_in_hand = self.check_colours_in_hand(tile_colour)
+    #                 tower_tile = Tile("tower", tile.colour, "X")
+    #                 tower_tile.stack_height = 3
+    #                 turn.move[placement[0]] = tower_tile
+    #                 print("Developed a tower")
+    #             else:
+    #                 if tile.type == "house":
+    #                     tile_colour = tile.colour
+    #                     # Check if agent has any of the colour of the active house in their hand
+    #                     colour_in_hand = self.check_colours_in_hand(tile_colour)
 
-                        # If you have a tile to play
-                        if len(colour_in_hand) > 0:
-                            # If there are more than one tiles in the agents hand of the right colour, play the lowst value
-                            tile_to_play = min(colour_in_hand, key=lambda tile: tile.value)
+    #                     # If you have a tile to play
+    #                     if len(colour_in_hand) > 0:
+    #                         # If there are more than one tiles in the agents hand of the right colour, play the lowst value
+    #                         tile_to_play = min(colour_in_hand, key=lambda tile: tile.value)
 
 
-                            # Find the coordinates of where to place it
-                            placement = [key for key, val in activated_tiles.items() if val == tile]
+    #                         # Find the coordinates of where to place it
+    #                         placement = [key for key, val in activated_tiles.items() if val == tile]
                             
-                            # Amend the stack height
-                            tile_to_play.stack_height = 2
+    #                         # Amend the stack height
+    #                         tile_to_play.stack_height = 2
 
-                            # Remove the tile from the agents hand ahead of playing it
-                            self.hand.remove(tile_to_play)
+    #                         # Remove the tile from the agents hand ahead of playing it
+    #                         self.hand.remove(tile_to_play)
 
-                            # Put a move
-                            turn.move[placement[0]] = tile_to_play
-                            print("Developed a house")
-                        else:
-                            pass
-                    else:
-                        pass
+    #                         # Put a move
+    #                         turn.move[placement[0]] = tile_to_play
+    #                         print("Developed a house")
+    #                     else:
+    #                         pass
+    #                 else:
+    #                     pass
 
-            turn.end_turn = True
+    #         turn.end_turn = True
 
 
-        return turn
+    #     return turn
     
     def check_colours_in_hand(self,colour):
         tile_of_colour = list()
@@ -101,45 +100,12 @@ class Agent:
                 pass
         return tile_of_colour
 
-    def decide_roll_or_place(self, turn):
-        turn_options = ["roll", "place_tile"]
+    def decide_roll_or_place(self):
+        # Options to the question 'am I going to roll die?'
+        turn_options = [True, False]
 
         index = self.random.randrange(len(turn_options))
 
-        turn.turn_type = turn_options[index]
+        roll_die = turn_options[index]
 
-        return turn
-
-    def get_activated_tiles(self, turn, dice):
-        directions = [  # 8 directions: diagonals included
-            (-1, -1), (0, -1), (1, -1),
-            (-1,  0),          (1,  0),
-            (-1,  1), (0,  1), (1,  1)
-        ]
-
-        # Create a list of activated tiles to fill
-        actived_tiles = dict()
-
-
-        # Filter to get board tiles with number on dice
-        for x,y in turn.game_state.items():
-            if y is not None:
-                if y.value == dice:
-                    actived_tiles[x] = y
-                else:
-                    pass
-            else:
-                pass
-        
-        actived_tiles_copy = copy.deepcopy(actived_tiles)
-
-        for (x, y) in actived_tiles_copy:
-            for dx, dy in directions:
-                nx, ny = x + dx, y + dy
-                # Only add if the neighbor is in bounds and empty
-                if (nx, ny) in turn.game_state and turn.game_state[(nx, ny)] is not None and turn.game_state[(nx, ny)].type == "advanced":
-                    actived_tiles[(nx, ny)] = turn.game_state[(nx, ny)]
-        
-        print(f"number of activated tiles: {len(actived_tiles)}")
-        return actived_tiles
-
+        return roll_die
