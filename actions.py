@@ -3,7 +3,7 @@ class Move:
     def __init__(self):
         self.type = None
         self.tile = None
-        self.target_location = None
+        self.target_location = ()
 
 
 class Turn:
@@ -29,7 +29,7 @@ class Turn:
             move = Move()
             
             # Get the agent to define the move
-            move = self.agent.where_to_place(self.board.game_state, self.rules, move)
+            move = self.agent.where_to_place(self.board, self.rules, move)
 
             # Play the move
             move_list = [move]
@@ -42,6 +42,23 @@ class Turn:
 
             print(f"{self.agent.name} rolled a {dice_value}")
 
+            # See which houses are activated by the roll, this determines the number of moves you could make (not including rerolls)
+            active_tiles_dict = self.rules.get_activated_tiles(self.board,dice_value)
+
+            # Create a list of moves
+            move_list = []
+
+            # Create a move object for each potential move (they don't all need to be used)
+            for _ in range(len(active_tiles_dict)):
+                move = Move()
+                move_list.append(move)
+            
+            # Let agent decide how to use the moves
+            move_list = self.agent.where_to_play(self.board,self.rules,move_list,active_tiles_dict)
+
+            # Enact the moves
+            self.play_moves(move_list)
+
         # Refill the players hand to 5
         self.bag.refill_agents_hand(self.agent)
 
@@ -50,7 +67,6 @@ class Turn:
             self.board.place_tile(move)
             
             # Check if that move ended the game:
-
             self.end_game = self.rules.is_game_over(self.board)
             if self.end_game == True:
                 print("game ended!")

@@ -48,6 +48,9 @@ class Game:
             # Start a turn for that agent
             current_turn = Turn(turn_count=turn_count, board=self.board, dice=self.dice, bag=self.bag, agent= agent, rules = self.rules)
 
+            # Play the turn
+            current_turn.play_turn()
+
             self.end_game = current_turn.end_game
             
             # Visualise board
@@ -59,7 +62,7 @@ class Game:
             turn_count = turn_count + 1
             print("\n")
 
-            if turn_count == 5:
+            if turn_count == 100:
                 self.end_game = True
         print("game ended!")
 

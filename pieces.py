@@ -84,7 +84,7 @@ class Board:
             self.game_state[pos] = bag.draw_tile()
     
     def place_tile(self, move):
-        
+    
         (x, y) = move.target_location
 
         if (x, y) not in self.game_state:
@@ -117,7 +117,12 @@ class Board:
             print("".join(row))
 
 class Rules:
-    def get_legal_placements(self,board):
+
+    def get_tower_tile(self,tower_colour):
+        tower_tile = Tile("tower", tower_colour, "X")
+        return tower_tile
+    
+    def get_legal_placements(self, board):
         directions = [  # 8 directions: diagonals included
             (-1, -1), (0, -1), (1, -1),
             (-1,  0),          (1,  0),
@@ -131,10 +136,23 @@ class Rules:
                 for dx, dy in directions:
                     nx, ny = x + dx, y + dy
                     # Only add if the neighbor is in bounds and empty
-                    if (nx, ny) in board.game_state.board and board.game_state.board[(nx, ny)] is None:
+                    if (nx, ny) in board.game_state and board.game_state[(nx, ny)] is None:
                         candidate_positions.add((nx, ny))
 
         return list(candidate_positions)
+
+    def get_activated_tiles(self,board,dice_value):
+        # A function that finds the number of tiles with the dice_value on the board
+        active_tiles = {}
+        for (x,y), tile in board.game_state.items():
+            if tile is not None: 
+                if tile.value == dice_value:
+                    active_tiles[(x,y)]= tile
+                else:
+                    pass
+        
+        return active_tiles
+
 
     def determine_winner(self, board, agents):
 
@@ -188,35 +206,35 @@ class Rules:
         
         return end_game
 
-    def get_activated_tiles(self, game_state, dice_value):
-        directions = [  # 8 directions: diagonals included
-            (-1, -1), (0, -1), (1, -1),
-            (-1,  0),          (1,  0),
-            (-1,  1), (0,  1), (1,  1)
-        ]
+    # def get_activated_tiles(self, game_state, dice_value):
+    #     directions = [  # 8 directions: diagonals included
+    #         (-1, -1), (0, -1), (1, -1),
+    #         (-1,  0),          (1,  0),
+    #         (-1,  1), (0,  1), (1,  1)
+    #     ]
 
-        # Create a list of activated tiles to fill
-        actived_tiles = dict()
+    #     # Create a list of activated tiles to fill
+    #     actived_tiles = dict()
 
 
-        # Filter to get board tiles with number on dice
-        for x,y in game_state.items():
-            if y is not None:
-                if y.value == dice_value:
-                    actived_tiles[x] = y
-                else:
-                    pass
-            else:
-                pass
+    #     # Filter to get board tiles with number on dice
+    #     for x,y in game_state.items():
+    #         if y is not None:
+    #             if y.value == dice_value:
+    #                 actived_tiles[x] = y
+    #             else:
+    #                 pass
+    #         else:
+    #             pass
         
-        actived_tiles_copy = copy.deepcopy(actived_tiles)
+    #     actived_tiles_copy = copy.deepcopy(actived_tiles)
 
-        for (x, y) in actived_tiles_copy:
-            for dx, dy in directions:
-                nx, ny = x + dx, y + dy
-                # Only add if the neighbor is in bounds and empty
-                if (nx, ny) in turn.game_state and turn.game_state[(nx, ny)] is not None and turn.game_state[(nx, ny)].type == "advanced":
-                    actived_tiles[(nx, ny)] = turn.game_state[(nx, ny)]
+    #     for (x, y) in actived_tiles_copy:
+    #         for dx, dy in directions:
+    #             nx, ny = x + dx, y + dy
+    #             # Only add if the neighbor is in bounds and empty
+    #             if (nx, ny) in turn.game_state and turn.game_state[(nx, ny)] is not None and turn.game_state[(nx, ny)].type == "advanced":
+    #                 actived_tiles[(nx, ny)] = turn.game_state[(nx, ny)]
         
-        print(f"number of activated tiles: {len(actived_tiles)}")
-        return actived_tiles
+    #     print(f"number of activated tiles: {len(actived_tiles)}")
+    #     return actived_tiles
