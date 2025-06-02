@@ -1,6 +1,8 @@
 import random
 import copy
 from collections import Counter, defaultdict
+from colorama import Fore, Style, init
+init(autoreset=True)
 
 class Tile:
     def __init__(self, tile_type, colour, value):
@@ -91,7 +93,7 @@ class Board:
             raise ValueError(f"Position ({x}, {y}) is out of bounds.")
 
         self.game_state[(x, y)] = move.tile 
-    
+
     def print_board(self):
         width = max(x for (x, _) in self.game_state.keys()) + 1
         height = max(y for (_, y) in self.game_state.keys()) + 1
@@ -105,16 +107,22 @@ class Board:
                 if tile is None:
                     row.append("  .  ")  # Empty cell
                 else:
-                    #print(tile, tile.stack_height, tile.type)
+                    # Determine color prefix
+                    if tile.colour == "red":
+                        color = Fore.RED
+                    elif tile.colour == "green":
+                        color = Fore.GREEN
+                    else:
+                        color = Fore.WHITE  # default for black/unknown
 
                     if tile.type == "tower":
-                        row.append(f"  X  ")  # Customize display here
+                        row.append(f"{color}  X  {Style.RESET_ALL}")
                     elif tile.stack_height == 2:
-                        row.append(f"  {str(tile.value)[0]}* ")  # Customize display here
+                        row.append(f"{color}  {str(tile.value)[0]}* {Style.RESET_ALL}")
                     elif tile.stack_height == 1:
-                        # Use short tile label or initial
-                        row.append(f"  {str(tile.value)[0]}  ")  # Customize display here
+                        row.append(f"{color}  {str(tile.value)[0]}  {Style.RESET_ALL}")
             print("".join(row))
+
 
 class Rules:
 
@@ -158,7 +166,7 @@ class Rules:
 
         # Step 1: Count tower colours on the board
         tower_colours = []
-        for tile in board.values():
+        for tile in board.game_state.values():
             if tile is not None and getattr(tile, 'type', None) == "tower":
                 tower_colours.append(tile.colour)
 

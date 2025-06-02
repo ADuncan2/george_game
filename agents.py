@@ -1,3 +1,4 @@
+from colorama import Fore, Style
 
 # agents.py
 class Agent:
@@ -95,3 +96,21 @@ class Agent:
         roll_die = turn_options[index]
 
         return roll_die
+    
+    def reveal_hand(self):
+        color_map = {
+            "red": Fore.RED,
+            "green": Fore.GREEN,
+            "black": Fore.WHITE  # Treat black as white in output
+        }
+
+        tile_strings = []
+        for tile in self.hand:
+            color = color_map.get(tile.colour, Fore.WHITE)
+            value = str(tile.value)
+            colored_value = f"{color}{value}{Style.RESET_ALL}"
+            tile_strings.append(colored_value)
+
+        print(f"{self.name} had: " + ", ".join(tile_strings))
+        
+        

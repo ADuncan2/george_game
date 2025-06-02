@@ -26,6 +26,7 @@ class Game:
 
         # Create a copy of the rules to play with
         self.rules = Rules()
+
         #Define a marker to track if the game is over
         self.end_game = False
 
@@ -64,6 +65,14 @@ class Game:
 
             if turn_count == 100:
                 self.end_game = True
+        
+        # Get each player in turn to print out their hand
+        for agent in self.agents:
+            agent.reveal_hand()
+
+        print("")
+        # Figure out which player wins
+        self.rules.determine_winner(self.board,self.agents)
         print("game ended!")
 
 
@@ -81,7 +90,7 @@ class Game:
 if __name__ == "__main__":
 
     # Create chance engine that will set the game
-    seed = 42
+    seed = 45
     random = random.Random(seed)
 
     # Create our players for the game

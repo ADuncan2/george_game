@@ -69,7 +69,7 @@ class Turn:
             # Check if that move ended the game:
             self.end_game = self.rules.is_game_over(self.board)
             if self.end_game == True:
-                print("game ended!")
+                # Break to stop moves here and end the turn
                 break
             else:
                 pass
